@@ -1,0 +1,41 @@
+{
+  "name": "mailgate-platform",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "concurrently \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "node --watch server/index.js",
+    "dev:worker": "node --watch server/worker.js",
+    "dev:web": "vite --host 0.0.0.0",
+    "start": "node server/index.js",
+    "worker": "node server/worker.js",
+    "db:migrate": "node server/migrate.js",
+    "db:legacy-import": "node server/import-legacy.js",
+    "test": "node --test tests/*.test.js",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "bullmq": "^5.40.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "imapflow": "^1.0.178",
+    "ioredis": "^5.4.2",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.468.0",
+    "nanoid": "^3.3.8",
+    "nodemailer": "^9.0.3",
+    "react": "^18.3.1",
+    "pg": "^8.13.1",
+    "react-dom": "^18.3.1",
+    "speakeasy": "^2.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "vite": "^6.0.5"
+  }
+}

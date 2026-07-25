@@ -1,0 +1,76 @@
+services:
+  api:
+    build: .
+    command: node server/index.js
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://mailgate:mailgate@postgres:5432/mailgate
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?set_a_long_random_jwt_secret}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set_a_64_hex_character_key}
+      INTERNAL_INGEST_SECRET: ${INTERNAL_INGEST_SECRET:?set_an_internal_secret}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?set_a_payment_webhook_secret}
+      APP_ORIGIN: ${APP_ORIGIN:?set_the_public_https_origin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set_a_secure_admin_password}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+  worker:
+    build: .
+    command: node server/worker.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://mailgate:mailgate@postgres:5432/mailgate
+      REDIS_URL: redis://redis:6379
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set_a_64_hex_character_key}
+      INTERNAL_INGEST_SECRET: ${INTERNAL_INGEST_SECRET:?set_an_internal_secret}
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+  migrate:
+    build: .
+    command: node server/migrate.js
+    environment:
+      DATABASE_URL: postgres://mailgate:mailgate@postgres:5432/mailgate
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set_a_secure_admin_password}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mailgate
+      POSTGRES_USER: mailgate
+      POSTGRES_PASSWORD: mailgate
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailgate -d mailgate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
